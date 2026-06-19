@@ -53,6 +53,8 @@ Teams only need to add **1 file** to their repo. The agent code is cloned at run
 
 3. Done! Open a PR — agent runs automatically.
 
+> **Note:** Secret names can only contain alphanumeric characters ([a-z], [A-Z], [0-9]) or underscores (_). Spaces are not allowed. Must start with a letter ([a-z], [A-Z]) or underscores (_). Paste values without quotes or extra spaces.
+
 #### Pros:
 - ✅ One file to copy
 - ✅ Agent updates automatically (always uses latest from this repo)
