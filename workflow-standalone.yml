@@ -1,0 +1,96 @@
+name: Deep Code Analysis
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  issue_comment:
+    types: [created, edited]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    name: Analyze PR with Deep Code Analyzer
+    if: |
+      github.event_name == 'pull_request' || 
+      (github.event_name == 'issue_comment' && 
+       github.event.issue.pull_request && 
+       (contains(github.event.comment.body, '@agent analyze') || 
+        contains(github.event.comment.body, '/analyze') ||
+        contains(github.event.comment.body, 'analyze')))
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: main
+
+      - name: Clone PR Agent
+        run: |
+          git clone https://${{ secrets.GH_PAT }}@github.com/pratik-abhang-comprinno/omprinno-pr-agent.git /tmp/pr-agent
+          cp -r /tmp/pr-agent/comprinno_pr_agent ./comprinno_pr_agent
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+        env:
+          FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+      - name: Install Probe (codebase search)
+        shell: bash
+        run: curl -fsSL https://raw.githubusercontent.com/probelabs/probe/main/install.sh | bash
+        continue-on-error: true
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-v2-boto3-pygithub-faiss
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: |
+          pip install boto3==1.40.45
+          pip install PyGithub==2.1.1
+          pip install PyYAML==6.0.1
+          pip install Jinja2==3.1.6
+          pip install faiss-cpu>=1.7.4
+          pip install sentence-transformers>=2.2.2
+          pip install python-dotenv>=1.0.0
+          pip install requests>=2.28.0
+
+      - name: Get PR URL
+        id: pr_url
+        run: |
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            echo "url=${{ github.event.pull_request.html_url }}" >> $GITHUB_OUTPUT
+          else
+            echo "url=${{ github.event.issue.pull_request.html_url }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run Deep Code Analysis
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_PR_URL: ${{ steps.pr_url.outputs.url }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+          AWS_REGION: ${{ secrets.AWS_REGION || 'ap-south-1' }}
+          BEDROCK_MODEL: ${{ secrets.BEDROCK_MODEL || 'apac.amazon.nova-pro-v1:0' }}
+          BEDROCK_TEMPERATURE: '0.3'
+          BEDROCK_MAX_TOKENS: '4096'
+          JIRA_URL: ${{ secrets.JIRA_URL }}
+          JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+          FAISS_S3_BUCKET: ${{ secrets.FAISS_S3_BUCKET }}
+          GITHUB_COMMENT_ID: ${{ github.event.comment.id }}
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+        run: |
+          python github_action_runner.py
+        working-directory: comprinno_pr_agent
