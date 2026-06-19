@@ -162,15 +162,32 @@ Works on private repos out of the box:
 
 ## AWS IAM Permissions Required
 
+Create an IAM User (e.g. `pr-agent-bot`) with the following inline policy or attach a managed policy:
+
+**Policy Name:** `BedrockInvokeAccess`
+
 ```json
 {
-  "Effect": "Allow",
-  "Action": ["bedrock:InvokeModel"],
-  "Resource": "*"
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": ["bedrock:InvokeModel"],
+      "Resource": "*"
+    }
+  ]
 }
 ```
 
-Ensure the Bedrock model (`apac.amazon.nova-pro-v1:0`) is enabled in your AWS region.
+**Steps:**
+1. AWS Console → IAM → Users → Create User (`pr-agent-bot`)
+2. Attach the above policy
+3. Security credentials → Create access key → Choose "Third-party service"
+4. Copy Access Key + Secret Key → Add as GitHub secrets
+
+> **Note:** These are long-lived credentials — they don't expire unless you manually rotate them.
+
+Ensure the Bedrock model (`apac.amazon.nova-pro-v1:0`) is enabled in your AWS region (Console → Bedrock → Model access).
 
 ## Configuration (Optional)
 
