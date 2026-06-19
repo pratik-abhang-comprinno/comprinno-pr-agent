@@ -74,7 +74,7 @@ Link the agent code as a submodule in your repo.
 
 1. Add submodule:
 ```bash
-git submodule add https://github.com/pratik-abhang-comprinno/omprinno-pr-agent.git comprinno_pr_agent_repo
+git submodule add https://github.com/pratik-abhang-comprinno/comprinno-pr-agent.git comprinno_pr_agent_repo
 ```
 
 2. Copy the workflow file:
