@@ -187,8 +187,6 @@ Create an IAM User (e.g. `pr-agent-bot`) with the following inline policy or att
 
 > **Note:** These are long-lived credentials — they don't expire unless you manually rotate them.
 
-Ensure the Bedrock model (`apac.amazon.nova-pro-v1:0`) is enabled in your AWS region (Console → Bedrock → Model access).
-
 ## Configuration (Optional)
 
 Create `.pr-agent-config.yml` in your repo root:
