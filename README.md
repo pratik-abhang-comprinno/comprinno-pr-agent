@@ -187,7 +187,7 @@ Works on private repos out of the box:
         "bedrock:InvokeModel",
         "bedrock:InvokeModelWithResponseStream"
       ],
-      "Resource": "arn:aws:bedrock:ap-south-1::foundation-model/*"
+      "Resource": "*"
     }
   ]
 }
