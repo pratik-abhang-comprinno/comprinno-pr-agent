@@ -31,7 +31,7 @@ jobs:
 
       - name: Clone PR Agent
         run: |
-          git clone https://${{ secrets.GH_PAT }}@github.com/pratik-abhang-comprinno/comprinno-pr-agent.git /tmp/pr-agent
+          git clone https://github.com/pratik-abhang-comprinno/comprinno-pr-agent.git /tmp/pr-agent
           cp -r /tmp/pr-agent/comprinno_pr_agent ./comprinno_pr_agent
 
       - name: Set up Python

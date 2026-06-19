@@ -45,7 +45,6 @@ Teams only need to add **1 file** to their repo. The agent code is cloned at run
 | `AWS_ACCESS_KEY_ID` | AWS access key with Bedrock access | ✅ |
 | `AWS_SECRET_ACCESS_KEY` | AWS secret key | ✅ |
 | `AWS_REGION` | e.g. `ap-south-1` | ✅ |
-| `GH_PAT` | GitHub Personal Access Token with `repo` scope (to clone this private repo) | ✅ |
 | `AWS_SESSION_TOKEN` | Only if using temporary credentials | Optional |
 | `JIRA_URL` | e.g. `https://yourorg.atlassian.net` | Optional |
 | `JIRA_EMAIL` | Jira account email | Optional |
@@ -54,15 +53,11 @@ Teams only need to add **1 file** to their repo. The agent code is cloned at run
 
 3. Done! Open a PR — agent runs automatically.
 
-#### How to create `GH_PAT`:
-- GitHub → Settings → Developer settings → Personal access tokens → Tokens (classic)
-- Generate new token with `repo` scope
-- Add it as secret `GH_PAT` in your target repo
-
 #### Pros:
 - ✅ One file to copy
 - ✅ Agent updates automatically (always uses latest from this repo)
 - ✅ No code duplication
+- ✅ No PAT needed (repo is public)
 
 ---
 
@@ -96,7 +91,6 @@ working-directory: comprinno_pr_agent_repo/comprinno_pr_agent
     fetch-depth: 0
     ref: main
     submodules: true
-    token: ${{ secrets.GH_PAT }}
 ```
 
 5. Add secrets (same as Option A)
@@ -162,7 +156,7 @@ PR opened/updated → GitHub Actions triggers → Agent runs:
 
 Works on private repos out of the box:
 - `GITHUB_TOKEN` (auto-provided by Actions) has access to the repo's PRs
-- For Option A/B: `GH_PAT` is needed to clone this agent repo (if private)
+- The agent source repo is public — no extra token needed to clone it
 
 ## AWS IAM Permissions Required
 
@@ -195,5 +189,5 @@ ignore_patterns:
 | AWS credentials error | Check secrets — no extra spaces |
 | Bedrock access denied | Enable model in AWS console + check IAM |
 | No comments on PR | File type not supported (see languages above) |
-| Clone failed (Option A) | Check `GH_PAT` has `repo` scope |
+| Clone failed (Option A) | Check network connectivity |
 | Submodule empty | Run `git submodule update --init` |
