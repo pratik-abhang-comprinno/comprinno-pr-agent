@@ -160,11 +160,22 @@ Works on private repos out of the box:
 - `GITHUB_TOKEN` (auto-provided by Actions) has access to the repo's PRs
 - The agent source repo is public — no extra token needed to clone it
 
-## AWS IAM Permissions Required
+## AWS IAM Setup (Step-by-Step)
 
-Create an IAM User (e.g. `pr-agent-bot`) with the following inline policy or attach a managed policy:
+### Step 1: Create IAM User
 
-**Policy Name:** `BedrockInvokeAccess`
+1. Go to: https://console.aws.amazon.com/iam/home#/users
+2. Click **"Create user"**
+3. User name: `pr-agent-bot`
+4. ❌ Don't check "Provide user access to the AWS Management Console"
+5. Click **Next**
+
+### Step 2: Create & Attach Policy (Bedrock — Required)
+
+1. On the permissions page, click **"Attach policies directly"**
+2. Click **"Create policy"** (opens new tab)
+3. Switch to **JSON** tab
+4. Paste this:
 
 ```json
 {
@@ -172,20 +183,81 @@ Create an IAM User (e.g. `pr-agent-bot`) with the following inline policy or att
   "Statement": [
     {
       "Effect": "Allow",
-      "Action": ["bedrock:InvokeModel"],
-      "Resource": "*"
+      "Action": [
+        "bedrock:InvokeModel",
+        "bedrock:InvokeModelWithResponseStream"
+      ],
+      "Resource": "arn:aws:bedrock:ap-south-1::foundation-model/*"
     }
   ]
 }
 ```
 
-**Steps:**
-1. AWS Console → IAM → Users → Create User (`pr-agent-bot`)
-2. Attach the above policy
-3. Security credentials → Create access key → Choose "Third-party service"
-4. Copy Access Key + Secret Key → Add as GitHub secrets
+5. Click **Next**
+6. Policy name: `BedrockInvokeAccess`
+7. Click **Create policy**
+8. Go back to the user creation tab → Click refresh 🔄
+9. Search `BedrockInvokeAccess` → Check it ✅
+10. Click **Next** → **Create user**
 
-> **Note:** These are long-lived credentials — they don't expire unless you manually rotate them.
+### Step 3: (Optional) Add S3 Policy — For Issue Memory Across PRs
+
+> Only needed if you want the agent to remember issues across PRs using FAISS + S3. Skip if not needed.
+
+1. Go to IAM → Users → `pr-agent-bot` → **Permissions** tab
+2. Click **"Add permissions"** → **"Attach policies directly"**
+3. Click **"Create policy"** → JSON tab → Paste:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetObject",
+        "s3:PutObject",
+        "s3:ListBucket"
+      ],
+      "Resource": [
+        "arn:aws:s3:::YOUR-BUCKET-NAME",
+        "arn:aws:s3:::YOUR-BUCKET-NAME/*"
+      ]
+    }
+  ]
+}
+```
+
+4. Replace `YOUR-BUCKET-NAME` with your actual S3 bucket name
+5. Policy name: `PRAgentS3Access`
+6. Create policy → Attach to user
+7. Add `FAISS_S3_BUCKET` secret in GitHub with your bucket name
+
+### Step 4: Get Access Key Credentials
+
+1. Go to IAM → Users → Click `pr-agent-bot`
+2. Go to **"Security credentials"** tab
+3. Scroll to **"Access keys"** → Click **"Create access key"**
+4. Use case: Select **"Third-party service"**
+5. Check the confirmation box → Click **Next** → **Create access key**
+6. ⚠️ **Copy both values NOW** (Secret only shows once!):
+   - Access key ID (e.g. `AKIA...`)
+   - Secret access key (e.g. `wJalr...`)
+
+### Step 5: Add to GitHub Repo Secrets
+
+Go to your repo → **Settings → Secrets and variables → Actions → New repository secret**
+
+| Secret Name | Value |
+|-------------|-------|
+| `AWS_ACCESS_KEY_ID` | Paste the Access Key ID |
+| `AWS_SECRET_ACCESS_KEY` | Paste the Secret Access Key |
+| `AWS_REGION` | `ap-south-1` |
+| `FAISS_S3_BUCKET` | *(Optional)* Your S3 bucket name |
+
+> **Note:** These are long-lived credentials — they don't expire unless you manually rotate or delete them.
+
+> **To delete later:** IAM → Users → `pr-agent-bot` → Security credentials → Delete access key (or delete the user entirely).
 
 ## Configuration (Optional)
 
